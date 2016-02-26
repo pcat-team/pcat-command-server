@@ -1,18 +1,12 @@
 {
   "name": "pcat-command-server",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "pcat server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "guoxmin,jinc",
+  "author": "guoxmin,jinc,fis-team",
   "license": "MIT",
-  "dependencies": {
-    "body-parser": "^1.13.3",
-    "compression": "^1.5.1",
-    "express": "^4.13.4",
-    "multer": "^1.0.3",
-    "serve-index": "^1.7.3"
-  }
+  "dependencies": {}
 }

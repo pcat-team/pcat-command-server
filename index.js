@@ -1,76 +1,105 @@
-'use strict'
-var fork = require('child_process').fork
-var path = require('path')
-// var server = require('./server')
-var name = 'pcServer'
-var dirname = path.resolve(__dirname)
-exports.name = 'server'
-exports.usage = '<commad> [option]'
-exports.desc = 'open local server for liveaload and preview'
+var _ = fis.util;
+var server = require('./lib/server.js');
+var util = require('./lib/util.js');
 
+exports.name = 'server <command> [options]';
+exports.desc = 'launch a server';
 exports.options = {
-  '-s, --start <port>': 'start a localserver with <port> || 8090',
-  '-x, --stop': 'stop the loacal sertver',
-  '-p, --pm2 <port>': 'pm2 start the server'
+  '-h, --help': 'print this help message',
+  '-p, --port <int>': 'server listen port',
+  '--root <path>': 'document root',
+  '--www <path>': 'alias for --root',
+  '--type': 'specify server type',
+  '--timeout <seconds>': 'start timeout',
+  '--https': 'start https server',
+  '--no-browse': 'do not open a web browser.',
+  '--no-daemon': 'do not run in background.',
+  '--include <glob>': 'clean include filter',
+  '--exclude <glob>': 'clean exclude filter'
 };
-exports.run = function(argv, cli, env){
-  if (argv.h || argv.help) {
-    return cli.help(exports.name, exports.options);
-  }
-  var command = argv._
-  if(argv.p || argv.pm2){
-    var pm2 = require('pm2')
-    var port = argv.p === true ? 8090 : (argv.p || argv.pm2)
-    // server(argv.s)
-    // process._server_port_ = argv.s
-    console.log('port:'+argv.p)
-    pm2.connect(function() {
-      pm2.start({
-        name: name,
-        script    : path.resolve(dirname,'./server/index.js'),         // Script to be run
-        exec_mode : 'fork',        // Allow your app to be clustered
-        // instances : 4,           // Optional: Scale your app by 4
-        "cwd": process.cwd(),
-        max_memory_restart : '100M',   // Optional: Restart your app if it reaches 100Mo
-        args: [port]
-      }, function(err, apps) {
-        if(err) console.error(err)
-        pm2.disconnect()
-      });
+exports.commands = {
+  'start': 'start server',
+  'stop': 'shutdown server',
+  'restart': 'restart server',
+  'info': 'output server info',
+  'open': 'open document root directory',
+  'clean': 'clean files in document root',
+};
 
-      // pm2.start({
-      //   watch: __dirname + '/socket/index.js',
-      //   name: name + '_socket',
-      //   script    : __dirname + '/socket/index.js',         // Script to be run
-      //   exec_mode : 'fork',        // Allow your app to be clustered
-      //   // instances : 4,           // Optional: Scale your app by 4
-      //   "cwd": process.cwd(),
-      //   max_memory_restart : '100M',   // Optional: Restart your app if it reaches 100Mo
-      //   args: [port]
-      // }, function(err, apps) {
-      //   if(err) console.error(err)
-      // });
-    });
+exports.run = function(argv, cli, env) {
+
+  // 显示帮助信息
+  if (argv.h || argv.help) {
+    return cli.help(exports.name, exports.options, exports.commands);
   }
-  if(argv.s || argv.start){
-    var port = argv.s === true ? 8090 : (argv.s || argv.start)
-    var cwd = process.cwd()
-    fis.log.notice('browse ' + cwd.yellow.bold + '\n')
-    fis.log.notice('Hit CTRL-C to stop the server'.green.bold)
-    var _c = fork(path.resolve(dirname,'./server/index.js'),[port],{
-      cwd:cwd
-    })
-    return _c
+
+  if (!validate(argv)) {
+    return;
   }
-  if(argv.x || argv.stop){
-    pm2.connect(function() {
-      pm2.delete(name, function(err, apps) {
-        pm2.disconnect();
-      })
-      // pm2.delete(name + '_socket', function(err, apps) {
-      //   pm2.disconnect();
-      // })
-    });
+
+  // 因为 root 被占用了，所以这里暂且允许通过 --www 来指定。
+  if (argv.www) {
+    argv.root = argv.www;
+    delete argv.www;
   }
-  
+
+  // short name
+  if (argv.p && !argv.port) {
+    argv.port = argv.p;
+    delete argv.p;
+  }
+
+  var cmd = argv._[1];
+  var serverInfo = util.serverInfo() || {};
+  delete argv['_'];
+  var options = _.assign({
+    type: fis.get('server.type', 'node'),
+
+    // 每次 start 的时候，root 都需要重新指定，否则使用默认 document root.
+    root: cmd === 'start' ? util.getDefaultServerRoot() : (serverInfo.root || util.getDefaultServerRoot()),
+
+    port: 8080,
+    timeout: 30, // 30 秒
+    browse: true,
+    daemon: true,
+    https: false
+  }, argv);
+
+  // 如果指定的是文件，则报错。
+  if (fis.util.exists(options.root)) {
+    if (!fis.util.isDir(options.root)) {
+      fis.log.error('invalid document root `%s` is not a directory.', options.root);
+    }
+  } else {
+    fis.util.mkdir(options.root);
+  }
+
+  options.root = fis.util.realpath(options.root);
+
+  // set options to server.
+  server.options(options);
+
+  switch (cmd) {
+    case 'restart':
+      server.stop(server.start.bind(server));
+      break;
+
+    case 'start':
+    case 'stop':
+    case 'info':
+    case 'open':
+    case 'clean':
+      server[cmd].call(server);
+      break;
+
+    default:
+      cli.help(exports.name, exports.options, exports.commands);
+      break;
+  }
+};
+
+// 占位
+// 验证参数是否正确。
+function validate() {
+  return true;
 }
