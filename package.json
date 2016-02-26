@@ -1,6 +1,6 @@
 {
   "name": "pcat-command-server",
-  "version": "1.0.3",
+  "version": "1.0.8",
   "description": "pcat server",
   "main": "index.js",
   "scripts": {
@@ -9,9 +9,10 @@
   "author": "guoxmin,jinc",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.13.4",
     "body-parser": "^1.13.3",
     "compression": "^1.5.1",
-    "multer": "^1.0.3"
+    "express": "^4.13.4",
+    "multer": "^1.0.3",
+    "serve-index": "^1.7.3"
   }
 }

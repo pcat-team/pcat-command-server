@@ -7,6 +7,7 @@ var qs = require('querystring')
 var multer = require('multer')
 var router = express.Router()
 var bodyP = require('body-parser')
+var serveIndex = require('serve-index')
 var fs  = require('fs')
 
 var app = express()
@@ -235,11 +236,11 @@ var isMalicious = function(filepath) {
     var ext = path.extname(filepath);
     return ext !== '.css' && ext !== '.js' || filepath.indexOf('../') !== -1;
 }
-
-app.use('/', express.static(_STATIC))
-app.use('/', express.static(_PAGE))
-app.use('/', express.static(_TEMP))
-app.use('/map/', express.static(_MAP))
+// app.use('/page', serveIndex(_PAGE))
+// app.use('/page', express.static(_PAGE))
+// app.use('/template', serveIndex(_TEMP))
+// app.use('/template', express.static(_TEMP))
+// app.use('/map/', express.static(_MAP))
 app.use('/_output/', express.static(_OUTPUT))
 app.use('/dev/', express.static(_DEV))
 app.use('/ol/', express.static(_OL))
@@ -253,7 +254,7 @@ app.use('/',function(req,res,next){
   if(!~req.originalUrl.indexOf('??'))return next();
   var urls = req.originalUrl.split('??')
   var files = urls[1].replace(/\&.*/,'').split(',')
-  var root = path.join(_STATIC,urls[0])
+  var root = path.join(_THIS_DIR,urls[0])
   var contents = []
   ext = path.extname(req.originalUrl);
   if(ext)res.type(ext.slice(1));
@@ -267,14 +268,16 @@ app.use('/',function(req,res,next){
       } catch (e) {
           console.error('[combo] cannot read file: ' + filePath + '\n', e.stack);
       }
-      if (content) contents.push(fileCache[file] = content);
+      if (content !== void 0) contents.push(fileCache[file] = content);
   })
   rs = contents.join('\n');
   if (contents.length !== files.length) {
-      console.error('[combo] some files not found');
+      console.error('[combo] some files not found',files,contents);
   }
   res.send(rs);
 })
+app.use('/', serveIndex(_THIS_DIR))
+app.use('/', express.static(_THIS_DIR))
 console.log(path.resolve('./'))
 app.use(logErrors);
 app.use(clientErrorHandler);
