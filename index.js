@@ -3,7 +3,7 @@ var server = require('./lib/server.js');
 var util = require('./lib/util.js');
 var fs = require('fs')
 var path = require('path')
-var commonConfig = {api:'dev6.pconline.com.cn:8002'}
+var commonConfig = {api:'dev6.{{site}}.com.cn:8002'}
 // try{
 //   commonConfig = require(path.resolve(fis.project.getTempPath(),'_config.js'))
 // }catch(e){
