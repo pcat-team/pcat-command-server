@@ -1,7 +1,15 @@
 var _ = fis.util;
 var server = require('./lib/server.js');
 var util = require('./lib/util.js');
-
+var fs = require('fs')
+var path = require('path')
+var commonConfig = {api:'dev6.pconline.com.cn:8002'}
+// try{
+//   commonConfig = require(path.resolve(fis.project.getTempPath(),'_config.js'))
+// }catch(e){
+//   commonConfig = {}
+//   fis.log.warn(`You Cant preview template of cms --> _config.js`.red.bold)
+// }
 exports.name = 'server <command> [options]';
 exports.desc = 'launch a server';
 exports.options = {
@@ -48,20 +56,40 @@ exports.run = function(argv, cli, env) {
     argv.port = argv.p;
     delete argv.p;
   }
-
+  var thisProject = fis.project.getProjectPath()
+  var _site = thisProject.split('/')
+  var site = thisProject.replace(/.*?(pc(?:auto|online|baby|lady|house|games)).*/ig,'$1') || ''
+  var _version
   var cmd = argv._[1];
+  var cmd_project = argv._[2]
+  if(!cmd_project){
+    try{
+      var __json = JSON.parse(fs.readFileSync(path.resolve(thisProject,'package.json')))
+      thisProject = __json.name
+      _version = '/' + __json.version + '/'
+    }catch(e){
+      thisProject = ''
+      site = ''
+    }
+  }
+  var _project = cmd_project || thisProject
   var serverInfo = util.serverInfo() || {};
   delete argv['_'];
+  fis.log.info(argv['no-daemon'])
   var options = _.assign({
+    _project:site ? _project : '',
+    _version: _version || '',
+    _site: site ? site + '/' : '',
     type: fis.get('server.type', 'node'),
 
     // 每次 start 的时候，root 都需要重新指定，否则使用默认 document root.
     root: cmd === 'start' ? util.getDefaultServerRoot() : (serverInfo.root || util.getDefaultServerRoot()),
 
+    api:commonConfig.api,
     port: 8080,
     timeout: 30, // 30 秒
     browse: true,
-    daemon: true,
+    daemon: argv['no-daemon'] === void 0 ? !0 : !1,
     https: false
   }, argv);
 
