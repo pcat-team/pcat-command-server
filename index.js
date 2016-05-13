@@ -57,16 +57,21 @@ exports.run = function(argv, cli, env) {
     delete argv.p;
   }
   var thisProject = fis.project.getProjectPath()
-  var _site = thisProject.split('/')
+
   var site = thisProject.replace(/.*?(pc(?:auto|online|baby|lady|house|games)).*/ig,'$1') || ''
-  var _version
+
+  var _version;
+  var client;
+  var dir;
   var cmd = argv._[1];
   var cmd_project = argv._[2]
   if(!cmd_project){
     try{
       var __json = JSON.parse(fs.readFileSync(path.resolve(thisProject,'package.json')))
       thisProject = __json.name
-      _version = '/' + __json.version + '/'
+      _version = __json.version + '/'
+      client = __json.client+"/";
+      dir = __json.dir ?__json.dir+"/":"";
     }catch(e){
       thisProject = ''
       site = ''
@@ -75,9 +80,10 @@ exports.run = function(argv, cli, env) {
   var _project = cmd_project || thisProject
   var serverInfo = util.serverInfo() || {};
   delete argv['_'];
-  fis.log.info(argv['no-daemon'])
   var options = _.assign({
     _project:site ? _project : '',
+    _client:client || "",
+    _dir:dir || "",
     _version: _version || '',
     _site: site ? site + '/' : '',
     type: fis.get('server.type', 'node'),
