@@ -11,7 +11,7 @@ var commonConfig = {api:'cms.{{site}}.com.cn'}
 //   fis.log.warn(`You Cant preview template of cms --> _config.js`.red.bold)
 // }
 exports.name = 'server <command> [options]';
-exports.desc = 'launch a server';
+exports.desc = '内置服务器';
 exports.options = {
   '-h, --help': 'print this help message',
   '-p, --port <int>': 'server listen port',
