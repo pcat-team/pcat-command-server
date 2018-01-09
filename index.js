@@ -58,7 +58,7 @@ exports.run = function(argv, cli, env) {
   }
   var thisProject = fis.project.getProjectPath()
 
-  var site = thisProject.replace(/.*?(pc(?:auto|online|baby|lady|house|games)).*/ig,'$1') || ''
+  var site = thisProject.replace(/.*?(geekev||pc(?:auto|online|baby|lady|house|games)).*/ig,'$1') || ''
 
   var _version;
   var client;
